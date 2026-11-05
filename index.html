@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<base target="_blank">
+<title>Show da Terra Fértil</title>
+<meta name="description" content="Jogue o Show da Terra Fértil e ganhe desconto na sua pizza!">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%F0%9F%8D%95%3C/text%3E%3C/svg%3E">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;700;800;900&display=swap">
+<style>
+  /* Layout: palco de programa de auditório — fundo azul-royal com holofotes girando, letreiro dourado, uma coluna para celular */
+  :root {
+    --noite: #060B3A; --royal: #0E1E8C; --roxo: #4B1BA6; --ouro: #FFC93C; --ouro-escuro: #C98A00;
+    --verde: #18C964; --vermelho: #FF3B3B; --branco: #FFFFFF; --suave: #C9D2FF;
+    --display: 'Lilita One', 'Arial Black', system-ui, sans-serif;
+    --corpo: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; min-height: 100%; }
+  body { color: var(--branco); font-family: var(--corpo); background: var(--noite); overflow-x: hidden; }
+  /* palco */
+  .palco { position: fixed; inset: 0; z-index: 0; background: radial-gradient(120% 80% at 50% 10%, var(--roxo) 0%, var(--royal) 40%, var(--noite) 85%); overflow: hidden; }
+  .raios { position: absolute; left: 50%; top: 18%; width: 260vmax; height: 260vmax; transform: translate(-50%, -50%); opacity: .22;
+    background: repeating-conic-gradient(from 0deg, rgba(255,255,255,.9) 0deg 6deg, transparent 6deg 22deg); animation: gira 40s linear infinite; }
+  .holo { position: absolute; top: -20%; width: 45vw; height: 140%; background: linear-gradient(180deg, rgba(255,235,160,.35), transparent 70%); filter: blur(8px); transform-origin: top center; }
+  .holo.e { left: 5%; animation: varre 6s ease-in-out infinite alternate; }
+  .holo.d { right: 5%; animation: varre 7s ease-in-out infinite alternate-reverse; }
+  .estrelas i { position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #fff; animation: pisca 2.4s ease-in-out infinite; }
+  @keyframes gira { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes varre { from { transform: rotate(-18deg); } to { transform: rotate(18deg); } }
+  @keyframes pisca { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+
+  main { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 18px 16px 32px; display: flex; flex-direction: column; gap: 14px; min-height: 100vh; }
+  .logo { text-align: center; }
+  .logo small { display: block; font-weight: 900; font-size: 12px; letter-spacing: .2em; color: var(--suave); text-transform: uppercase; }
+  .logo h1 { font-family: var(--display); font-weight: 400; margin: 2px 0 0; font-size: clamp(38px, 11vw, 54px); line-height: .92; color: var(--ouro);
+    text-shadow: 0 3px 0 var(--ouro-escuro), 0 6px 0 #7a5200, 0 0 30px rgba(255,201,60,.6); letter-spacing: .02em; }
+  .logo h1 span { display: block; color: #fff; text-shadow: 0 3px 0 #2a3aa8, 0 0 24px rgba(255,255,255,.5); }
+  .card { background: linear-gradient(180deg, rgba(14,30,140,.85), rgba(6,11,58,.9)); border: 2px solid var(--ouro); border-radius: 20px; padding: 18px;
+    box-shadow: 0 0 0 4px rgba(255,201,60,.18), 0 18px 40px rgba(0,0,0,.45); }
+  .regras { margin: 0; padding-left: 18px; line-height: 1.55; font-size: 15px; }
+  .regras b { color: var(--ouro); }
+  label { font-weight: 800; font-size: 14px; display: block; margin: 10px 0 6px; }
+  input { width: 100%; font: 700 18px var(--corpo); padding: 13px 12px; border-radius: 12px; border: 2px solid var(--ouro); background: #fff; color: #10195e; }
+  input:focus-visible { outline: 3px solid var(--ouro); outline-offset: 2px; }
+  .btn { width: 100%; font: 400 22px var(--display); letter-spacing: .03em; padding: 14px; border: 0; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(180deg, #FFE07A, var(--ouro) 55%, #E6A800); color: #3b2500; box-shadow: 0 5px 0 var(--ouro-escuro), 0 0 18px rgba(255,201,60,.5); }
+  .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--ouro-escuro); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn.sec { background: rgba(255,255,255,.08); color: #fff; border: 2px solid rgba(255,255,255,.55); box-shadow: none; font-size: 18px; padding: 11px; }
+  .erro { color: #FFB4A4; font-weight: 800; min-height: 1.2em; margin: 8px 0 0; }
+
+  /* abertura */
+  .abertura { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; text-align: center; padding: 24px; }
+  .abertura .logo h1 { font-size: clamp(54px, 16vw, 86px); animation: entra 1.1s cubic-bezier(.2,1.4,.4,1) both; }
+  .abertura .logo small { animation: aparece .8s .5s both; font-size: 14px; }
+  .abertura .btn { max-width: 320px; animation: pulsa 1.4s 1.2s ease-in-out infinite, aparece .6s .9s both; }
+  .abertura p { margin: 0; color: var(--suave); font-weight: 800; animation: aparece .6s 1.1s both; }
+  @keyframes entra { from { transform: scale(.2) rotate(-8deg); opacity: 0; } to { transform: scale(1) rotate(0); opacity: 1; } }
+  @keyframes aparece { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes pulsa { 50% { transform: scale(1.06); } }
+
+  /* jogo */
+  .topo { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .topo .nivel { font-weight: 900; color: var(--suave); font-size: 14px; }
+  .topo .valor { font-family: var(--display); font-size: 28px; color: var(--ouro); text-shadow: 0 0 14px rgba(255,201,60,.6); }
+  .tempo { height: 12px; border-radius: 99px; background: rgba(255,255,255,.15); overflow: hidden; }
+  .tempo i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--ouro), #FFE07A); transform-origin: left; }
+  .tempo.alerta i { background: var(--vermelho); }
+  .segundos { text-align: right; font-weight: 900; font-size: 13px; color: var(--suave); margin-top: -8px; }
+  .pergunta { font-size: 20px; font-weight: 900; line-height: 1.35; text-align: center; margin: 0; padding: 14px 12px; text-wrap: balance;
+    background: linear-gradient(180deg, #1b2fb8, #0c1878); border: 2px solid var(--ouro); border-radius: 16px; }
+  .opcoes { display: grid; gap: 10px; }
+  .op { display: flex; gap: 12px; align-items: center; width: 100%; text-align: left; font: 800 17px var(--corpo); color: #fff;
+    background: linear-gradient(180deg, #2236c9, #101f8f); border: 2px solid rgba(255,201,60,.8); border-radius: 999px; padding: 12px 16px; cursor: pointer; transition: transform .1s; }
+  .op b { font-family: var(--display); font-weight: 400; color: var(--ouro); font-size: 21px; min-width: 22px; }
+  .op:hover:not(:disabled) { transform: scale(1.02); }
+  .op:focus-visible { outline: 3px solid var(--ouro); outline-offset: 2px; }
+  .op.escolhida { background: linear-gradient(180deg, #FFE07A, var(--ouro)); color: #3b2500; animation: suspense .5s ease-in-out infinite alternate; } .op.escolhida b { color: #3b2500; }
+  .op.certa { background: var(--verde); border-color: #fff; color: #fff; animation: none; } .op.certa b { color: #fff; }
+  .op.errada { background: var(--vermelho); border-color: #fff; color: #fff; animation: treme .4s; } .op.errada b { color: #fff; }
+  .op:disabled { cursor: default; }
+  @keyframes suspense { to { box-shadow: 0 0 22px rgba(255,201,60,.9); } }
+  .placar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
+  .placar div { background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 8px 4px; }
+  .placar small { display: block; font-size: 11px; letter-spacing: .12em; font-weight: 900; color: var(--suave); }
+  .placar strong { font-family: var(--display); font-weight: 400; font-size: 20px; }
+  .placar .a strong { color: var(--verde); } .placar .p strong { color: var(--ouro); } .placar .e strong { color: #FF8C8C; }
+  .acoes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* resultado de cada resposta */
+  .flash { position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; text-align: center; padding: 20px; pointer-events: none; }
+  .flash.certo { background: radial-gradient(circle, #22d36d 0%, #0a6b33 75%); animation: fundo .25s both; }
+  .flash.errado { background: radial-gradient(circle, #ff4a4a 0%, #7a0000 75%); animation: fundo .25s both, treme .5s .1s; }
+  .flash strong { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 1; text-shadow: 0 4px 0 rgba(0,0,0,.35); animation: pop .55s cubic-bezier(.2,1.6,.4,1) both; }
+  .flash span { font-weight: 900; font-size: 20px; animation: aparece .4s .25s both; }
+  .flash .icone { font-size: 84px; line-height: 1; animation: pop .55s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes fundo { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes treme { 0%,100% { transform: none; } 20% { transform: translateX(-12px); } 40% { transform: translateX(12px); } 60% { transform: translateX(-8px); } 80% { transform: translateX(8px); } }
+  #confete { position: fixed; inset: 0; z-index: 45; pointer-events: none; width: 100%; height: 100%; }
+
+  .fim { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .fim h2 { font-family: var(--display); font-weight: 400; font-size: 34px; margin: 0; color: var(--ouro); text-wrap: balance; text-shadow: 0 0 18px rgba(255,201,60,.5); }
+  .fim p { margin: 0; line-height: 1.5; }
+  .cupom { font: 400 32px var(--display); letter-spacing: .08em; color: #10195e; background: #fff; border: 3px dashed var(--ouro); border-radius: 12px; padding: 8px 20px; user-select: all; }
+  .link { background: none; border: 0; color: #fff; font: 800 14px var(--corpo); text-decoration: underline; cursor: pointer; }
+  .som { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: 12px; z-index: 50; background: rgba(0,0,0,.4); color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 999px; padding: 6px 12px; font: 800 13px var(--corpo); cursor: pointer; }
+  .rodape { font-size: 12px; color: var(--suave); text-align: center; line-height: 1.5; margin-top: auto; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+</style>
+</head>
+<body>
+<div class="palco" aria-hidden="true"><div class="raios"></div><div class="holo e"></div><div class="holo d"></div><div class="estrelas" id="estrelas"></div></div>
+
+<!-- ABERTURA -->
+<section class="abertura" id="abertura">
+  <div class="logo"><small>Pizzaria Terra Fértil apresenta</small><h1>SHOW DA<span>TERRA FÉRTIL</span></h1></div>
+  <p>16 perguntas. Uma Pizza Grande no milhão.</p>
+  <button class="btn" id="btn-entrar" type="button">ENTRAR NO PALCO</button>
+</section>
+
+<main id="principal" hidden>
+  <div class="logo"><small>Pizzaria Terra Fértil apresenta</small><h1>SHOW DA<span>TERRA FÉRTIL</span></h1></div>
+
+  <!-- INÍCIO -->
+  <section id="tela-inicio" class="card">
+    <ul class="regras">
+      <li><b>16 perguntas</b> sobre pizza e sobre a Terra Fértil, da mais fácil à mais difícil.</li>
+      <li>Cada acerto aumenta seu desconto. Chegou ao <b>milhão? Ganha uma Pizza Grande!</b></li>
+      <li><b>1 minuto</b> por pergunta e <b>3 pulos</b>.</li>
+      <li>Pode <b>parar</b> quando quiser e levar o que ganhou. Se errar, leva <b>metade</b>. Passou dos <b>100 mil</b>? Tem <b>15% garantidos</b>.</li>
+      <li>Prêmio válido por 7 dias, de <b>quarta a sexta</b>. 1 partida por semana.</li>
+    </ul>
+    <form id="form-inicio" novalidate>
+      <label for="nome">Seu nome</label>
+      <input id="nome" autocomplete="given-name" maxlength="60" placeholder="Como podemos te chamar?">
+      <label for="tel">Seu WhatsApp com DDD</label>
+      <input id="tel" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="(21) 99999-9999">
+      <p class="erro" id="erro-inicio" role="alert"></p>
+      <button class="btn" id="btn-jogar" type="submit">VAMOS JOGAR!</button>
+    </form>
+  </section>
+
+  <!-- JOGO -->
+  <section id="tela-jogo" hidden>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px">
+      <div class="topo"><span class="nivel" id="nivel">Pergunta 1 de 16</span><span class="valor" id="valor">R$ 1 mil</span></div>
+      <div class="tempo" id="tempo"><i id="barra"></i></div>
+      <div class="segundos" id="segundos">60s</div>
+      <p class="pergunta" id="pergunta"></p>
+      <div class="opcoes" id="opcoes"></div>
+      <div class="placar">
+        <div class="a"><small>ACERTAR</small><strong id="v-acertar">5%</strong></div>
+        <div class="p"><small>PARAR</small><strong id="v-parar">0%</strong></div>
+        <div class="e"><small>ERRAR</small><strong id="v-errar">0%</strong></div>
+      </div>
+      <div class="acoes">
+        <button class="btn sec" id="btn-pular" type="button">Pular (3)</button>
+        <button class="btn sec" id="btn-parar" type="button">Parar</button>
+      </div>
+      <p class="erro" id="erro-jogo" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- FIM -->
+  <section id="tela-fim" class="card fim" hidden aria-live="polite">
+    <h2 id="fim-titulo"></h2>
+    <p id="fim-texto"></p>
+    <div class="cupom" id="fim-cupom" hidden></div>
+    <button class="link" id="copiar" type="button" hidden>Copiar cupom</button>
+    <p id="fim-validade" hidden></p>
+    <a class="btn" id="fim-pedir" href="#" rel="noopener" style="text-decoration:none;text-align:center" hidden>Fazer meu pedido</a>
+  </section>
+
+  <p class="rodape">Pizzaria Terra Fértil · Inhaúma · Desconto aplicado em uma pizza, não cumulativo com outras promoções.</p>
+</main>
+
+<div class="flash" id="flash" hidden aria-live="assertive"></div>
+<canvas id="confete" hidden></canvas>
+<button class="som" id="btn-som" type="button" aria-pressed="true">🔊 Som</button>
+
+<script>
+  const API = 'https://script.google.com/macros/s/AKfycbz0vqnadg8otplhepcDhpp0hVmbHrYsscUakXHpa2irnt-As8_blyh7mYUT83_cYw4Pdg/exec';
+  let CFG = { segundos: 60, cardapio: 'https://pedido.anota.ai/loja/pizzaria-terra-frtil', pulos: 3 };
+  const $ = id => document.getElementById(id);
+  let jogoId = null, timer = null, prazoLocal = 0, ultimoBip = 0;
+
+  // ---------- estrelas do palco ----------
+  for (let i = 0; i < 40; i++) { const s = document.createElement('i'); s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%'; s.style.animationDelay = (Math.random() * 2.4) + 's'; $('estrelas').append(s); }
+
+  // ---------- sons (gerados no navegador, sem arquivos) ----------
+  let ac = null, somLigado = true;
+  const audio = () => { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (ac && ac.state === 'suspended') ac.resume(); return ac; };
+  function nota(freq, ini, dur, tipo = 'triangle', vol = .25, glide) {
+    const c = audio(); if (!c || !somLigado) return;
+    const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + ini;
+    o.type = tipo; o.frequency.setValueAtTime(freq, t); if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .02); g.gain.exponentialRampToValueAtTime(.001, t + dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + .05);
+  }
+  const somAbertura = () => { [392, 523, 659, 784].forEach((f, i) => nota(f, i * .14, .5, 'square', .12)); nota(1047, .6, 1.1, 'triangle', .25); nota(523, .6, 1.1, 'triangle', .18); };
+  const somCerto = () => { [523, 659, 784, 1047].forEach((f, i) => nota(f, i * .09, .35, 'triangle', .28)); [1319, 1568].forEach((f, i) => nota(f, .4 + i * .08, .5, 'sine', .18)); };
+  const somErrado = () => { nota(392, 0, .35, 'sawtooth', .18, 370); nota(370, .35, .35, 'sawtooth', .18, 349); nota(349, .7, .9, 'sawtooth', .2, 220); };
+  const somSuspense = () => { nota(220, 0, .9, 'sine', .12, 330); };
+  const bip = () => nota(880, 0, .08, 'square', .06);
+  const somMilhao = () => { [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => nota(f, i * .1, .6, 'triangle', .25)); };
+  $('btn-som').addEventListener('click', () => { somLigado = !somLigado; $('btn-som').textContent = somLigado ? '🔊 Som' : '🔇 Mudo'; $('btn-som').setAttribute('aria-pressed', somLigado); });
+
+  // ---------- confete ----------
+  function confete(qtd = 140) {
+    const cv = $('confete'), ctx = cv.getContext('2d'); cv.hidden = false;
+    cv.width = innerWidth; cv.height = innerHeight;
+    const cores = ['#FFC93C', '#18C964', '#FF3B3B', '#FFFFFF', '#5B8CFF', '#FF7AE0'];
+    const ps = Array.from({ length: qtd }, () => ({ x: cv.width / 2, y: cv.height * .45, vx: (Math.random() - .5) * 16, vy: -Math.random() * 16 - 4, r: Math.random() * 6 + 4, c: cores[Math.floor(Math.random() * cores.length)], a: Math.random() * 6, va: (Math.random() - .5) * .4 }));
+    const t0 = performance.now();
+    (function passo(t) {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ps.forEach(p => { p.vy += .45; p.x += p.vx; p.y += p.vy; p.a += p.va; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.fillRect(-p.r / 2, -p.r / 4, p.r, p.r / 2); ctx.restore(); });
+      if (t - t0 < 2200) requestAnimationFrame(passo); else { ctx.clearRect(0, 0, cv.width, cv.height); cv.hidden = true; }
+    })(t0);
+  }
+
+  function flash(tipo, titulo, sub, ms) {
+    const f = $('flash'); f.className = 'flash ' + tipo; f.innerHTML = '';
+    const ic = document.createElement('div'); ic.className = 'icone'; ic.textContent = tipo === 'certo' ? '✔' : '✖';
+    const t = document.createElement('strong'); t.textContent = titulo;
+    const s = document.createElement('span'); s.textContent = sub || '';
+    f.append(ic, t, s); f.hidden = false;
+    if (navigator.vibrate) try { navigator.vibrate(tipo === 'certo' ? [60, 40, 60] : [300]); } catch (e) {}
+    return new Promise(r => setTimeout(() => { f.hidden = true; r(); }, ms));
+  }
+
+  // ---------- abertura ----------
+  $('btn-entrar').addEventListener('click', () => {
+    audio(); somAbertura();
+    $('abertura').style.transition = 'opacity .5s'; $('abertura').style.opacity = 0;
+    setTimeout(() => { $('abertura').hidden = true; $('principal').hidden = false; $('nome').focus(); }, 500);
+  });
+
+  const tel = $('tel');
+  tel.addEventListener('input', () => {
+    let d = tel.value.replace(/\D/g, '').slice(0, 11);
+    tel.value = d.length > 6 ? '(' + d.slice(0,2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4) : d.length > 2 ? '(' + d.slice(0,2) + ') ' + d.slice(2) : d;
+  });
+
+  const call = (fn, ...args) => fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }) })
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+  call('config').then(c => { if (c && c.segundos) CFG = c; }).catch(() => {});   // acorda o servidor e atualiza a configuração
+  const mostra = t => ['tela-inicio','tela-jogo','tela-fim'].forEach(x => $(x).hidden = x !== t);
+
+  $('form-inicio').addEventListener('submit', async e => {
+    e.preventDefault(); audio();
+    $('erro-inicio').textContent = '';
+    const b = $('btn-jogar'); b.disabled = true; b.textContent = 'Preparando o palco...';
+    try {
+      const r = await call('iniciar', $('nome').value, tel.value);
+      if (r.erro) { $('erro-inicio').textContent = r.erro; return; }
+      if (r.bloqueado) return bloqueio(r);
+      if (r.fim) return fim(r);
+      jogoId = r.id; mostra('tela-jogo'); render(r.painel);
+    } catch (err) { $('erro-inicio').textContent = 'Não conseguimos começar agora. Tente de novo em instantes.'; }
+    finally { b.disabled = false; b.textContent = 'VAMOS JOGAR!'; }
+  });
+
+  function render(p) {
+    $('erro-jogo').textContent = '';
+    $('nivel').textContent = 'Pergunta ' + p.nivel + ' de 16';
+    $('valor').textContent = p.valor;
+    $('pergunta').textContent = p.pergunta.texto;
+    $('v-acertar').textContent = p.acertar; $('v-parar').textContent = p.parar; $('v-errar').textContent = p.errar;
+    $('btn-pular').textContent = 'Pular (' + p.pulos + ')'; $('btn-pular').disabled = p.pulos <= 0;
+    $('btn-parar').disabled = p.parar === '0%';
+    const box = $('opcoes'); box.innerHTML = '';
+    p.pergunta.opcoes.forEach((t, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'op';
+      const l = document.createElement('b'); l.textContent = 'ABCD'[i];
+      const s = document.createElement('span'); s.textContent = t;
+      b.append(l, s); b.addEventListener('click', () => responde(i, b)); box.append(b);
+    });
+    relogio(p.restante);
+  }
+
+  function relogio(seg) {
+    clearInterval(timer);
+    prazoLocal = Date.now() + seg * 1000; ultimoBip = 0;
+    const tick = () => {
+      const rest = Math.max(0, prazoLocal - Date.now()), s = Math.ceil(rest / 1000);
+      $('barra').style.transform = 'scaleX(' + (rest / (CFG.segundos * 1000)) + ')';
+      $('segundos').textContent = s + 's';
+      $('tempo').classList.toggle('alerta', rest < 10000);
+      if (rest < 10000 && rest > 0 && s !== ultimoBip) { ultimoBip = s; bip(); }
+      if (rest <= 0) { clearInterval(timer); trava(true); envia('responder', -1); }
+    };
+    tick(); timer = setInterval(tick, 200);
+  }
+
+  function trava(v) { document.querySelectorAll('.op, #btn-pular, #btn-parar').forEach(b => b.disabled = v); }
+
+  async function responde(i, btn) {
+    clearInterval(timer); trava(true); btn.classList.add('escolhida'); somSuspense();
+    await new Promise(r => setTimeout(r, 1100));      // suspense
+    envia('responder', i, btn);
+  }
+
+  async function envia(fn, arg, btn) {
+    try {
+      const r = await call(fn, jogoId, arg);
+      if (r.erro) { $('erro-jogo').textContent = r.erro; trava(false); return; }
+      if (fn === 'responder') {
+        const acertou = r.acertou || r.milhao;
+        if (btn) { btn.classList.remove('escolhida'); btn.classList.add(acertou ? 'certa' : 'errada'); }
+        if (acertou) { somCerto(); confete(); await flash('certo', 'CERTA RESPOSTA!', r.milhao ? 'Você chegou ao milhão!' : 'Rumo ao milhão! 🍕', 1700); }
+        else if (r.motivo === 'tempo') { somErrado(); await flash('errado', 'TEMPO ESGOTADO!', 'O relógio venceu desta vez', 1900); }
+        else { somErrado(); await flash('errado', 'QUE PENA!', 'Resposta errada', 1900); }
+      }
+      if (r.fim) return fim(r);
+      render(r.painel);
+    } catch (e) { $('erro-jogo').textContent = 'Falha de conexão. Toque de novo.'; trava(false); }
+  }
+
+  $('btn-pular').addEventListener('click', () => { clearInterval(timer); trava(true); envia('pular'); });
+  $('btn-parar').addEventListener('click', () => { clearInterval(timer); trava(true); envia('parar'); });
+
+  function fim(r) {
+    clearInterval(timer); mostra('tela-fim');
+    const t = $('fim-titulo'), x = $('fim-texto');
+    if (r.milhao) { somMilhao(); confete(260); t.textContent = 'VOCÊ GANHOU O MILHÃO!'; x.textContent = 'Seu prêmio: uma Pizza Grande grátis! Use o cupom no Cardápio Digital.'; }
+    else if (r.pct > 0) {
+      if (r.resultado === 'Parou') { somCerto(); confete(80); }
+      t.textContent = r.resultado === 'Parou' ? 'Boa decisão!' : r.motivo === 'tempo' ? 'O tempo acabou!' : 'Fim de jogo!';
+      x.textContent = 'Você leva ' + r.pct + '% de desconto em uma pizza. Use o cupom no Cardápio Digital.';
+    } else {
+      t.textContent = r.motivo === 'tempo' ? 'O tempo acabou!' : 'Não foi dessa vez!';
+      x.textContent = 'Desta vez não teve prêmio. Semana que vem tem nova chance. E a pizza continua te esperando!';
+    }
+    const temCupom = !!r.cupom;
+    $('fim-cupom').hidden = !temCupom; $('copiar').hidden = !temCupom; $('fim-validade').hidden = !temCupom;
+    if (temCupom) { $('fim-cupom').textContent = r.cupom; $('fim-validade').textContent = 'Válido até ' + r.validade + ', de quarta a sexta. Pedido mínimo e regras no cardápio.'; }
+    $('fim-pedir').hidden = false; $('fim-pedir').href = CFG.cardapio;
+  }
+
+  function bloqueio(r) {
+    mostra('tela-fim');
+    $('fim-titulo').textContent = 'Você já jogou esta semana!';
+    $('fim-texto').textContent = 'Nova partida liberada a partir de ' + r.liberado + '.' + (r.ultimo && r.ultimo.cupom ? ' Seu último prêmio foi ' + (r.ultimo.pct === 100 ? 'uma Pizza Grande' : r.ultimo.pct + '% de desconto') + ':' : '');
+    const c = r.ultimo && r.ultimo.cupom;
+    $('fim-cupom').hidden = !c; $('copiar').hidden = !c; $('fim-validade').hidden = !c;
+    if (c) { $('fim-cupom').textContent = r.ultimo.cupom; $('fim-validade').textContent = 'Válido até ' + r.ultimo.validade + ', de quarta a sexta.'; }
+    $('fim-pedir').hidden = false; $('fim-pedir').href = CFG.cardapio;
+  }
+
+  $('copiar').addEventListener('click', () => {
+    const txt = $('fim-cupom').textContent;
+    const ok = () => $('copiar').textContent = 'Cupom copiado ✓';
+    const sel = () => { const rg = document.createRange(); rg.selectNodeContents($('fim-cupom')); const s = getSelection(); s.removeAllRanges(); s.addRange(rg); };
+    navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt).then(ok, sel) : sel();
+  });
+</script>
+</body>
+</html>
