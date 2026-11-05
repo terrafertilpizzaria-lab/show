@@ -361,14 +361,17 @@
   $('btn-pular').addEventListener('click', () => { clearInterval(timer); trava(true); envia('pular'); });
   $('btn-parar').addEventListener('click', () => { clearInterval(timer); trava(true); envia('parar'); });
 
+  // Cupons em reais: base Pizza Grande R$ 49,90 (5% = R$ 2,50; Pizza Grande grátis = R$ 49,90)
+  const emReais = pct => (pct >= 100 ? 49.9 : pct * 0.5).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   function fim(r) {
     clearInterval(timer); mostra('tela-fim');
     const t = $('fim-titulo'), x = $('fim-texto');
-    if (r.milhao) { somMilhao(); confete(260); t.textContent = 'VOCÊ GANHOU O MILHÃO!'; x.textContent = 'Seu prêmio: uma Pizza Grande grátis! Use o cupom no Cardápio Digital.'; }
+    if (r.milhao) { somMilhao(); confete(260); t.textContent = 'VOCÊ GANHOU O MILHÃO!'; x.textContent = 'Seu prêmio: uma Pizza Grande grátis! No Cardápio Digital, o cupom aparece como ' + emReais(100) + ' de desconto.'; }
     else if (r.pct > 0) {
       if (r.resultado === 'Parou') { somCerto(); confete(80); }
       t.textContent = r.resultado === 'Parou' ? 'Boa decisão!' : r.motivo === 'tempo' ? 'O tempo acabou!' : 'Fim de jogo!';
-      x.textContent = 'Você leva ' + r.pct + '% de desconto em uma pizza. Use o cupom no Cardápio Digital.';
+      x.textContent = 'Seu prêmio é ' + r.pct + '% de desconto na Pizza Grande, o que equivale a ' + emReais(r.pct) + '. No Cardápio Digital, o cupom aparece com esse valor em reais.';
     } else {
       t.textContent = r.motivo === 'tempo' ? 'O tempo acabou!' : 'Não foi dessa vez!';
       x.textContent = 'Desta vez não teve prêmio. Semana que vem tem nova chance. E a pizza continua te esperando!';
@@ -382,7 +385,7 @@
   function bloqueio(r) {
     mostra('tela-fim');
     $('fim-titulo').textContent = 'Você já jogou esta semana!';
-    $('fim-texto').textContent = 'Nova partida liberada a partir de ' + r.liberado + '.' + (r.ultimo && r.ultimo.cupom ? ' Seu último prêmio foi ' + (r.ultimo.pct === 100 ? 'uma Pizza Grande' : r.ultimo.pct + '% de desconto') + ':' : '');
+    $('fim-texto').textContent = 'Nova partida liberada a partir de ' + r.liberado + '.' + (r.ultimo && r.ultimo.cupom ? ' Seu último prêmio foi ' + (r.ultimo.pct === 100 ? 'uma Pizza Grande (' + emReais(100) + ')' : r.ultimo.pct + '% de desconto (' + emReais(r.ultimo.pct) + ')') + ':' : '');
     const c = r.ultimo && r.ultimo.cupom;
     $('fim-cupom').hidden = !c; $('copiar').hidden = !c; $('fim-validade').hidden = !c;
     if (c) { $('fim-cupom').textContent = r.ultimo.cupom; $('fim-validade').textContent = 'Use de quarta a sexta, até ' + r.ultimo.validade + '.'; }
