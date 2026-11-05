@@ -103,6 +103,8 @@
   #confete { position: fixed; inset: 0; z-index: 45; pointer-events: none; width: 100%; height: 100%; }
 
   .fim { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .fim form { width: 100%; text-align: left; }
+  .fim .ok { font-size: 17px; }
   .fim h2 { font-family: var(--display); font-weight: 400; font-size: 34px; margin: 0; color: var(--ouro); text-wrap: balance; text-shadow: 0 0 18px rgba(255,201,60,.5); }
   .fim p { margin: 0; line-height: 1.5; }
   .cupom { font: 400 32px var(--display); letter-spacing: .08em; color: #10195e; background: #fff; border: 3px dashed var(--ouro); border-radius: 12px; padding: 8px 20px; user-select: all; }
@@ -132,7 +134,7 @@
       <li>Cada acerto aumenta seu desconto. Chegou ao <b>milhão? Ganha uma Pizza Grande!</b></li>
       <li><b>1 minuto</b> por pergunta e <b>3 pulos</b>.</li>
       <li>Pode <b>parar</b> quando quiser e levar o que ganhou. Se errar, leva <b>metade</b>. Passou dos <b>100 mil</b>? Tem <b>15% garantidos</b>.</li>
-      <li>Prêmio válido por 7 dias, de <b>quarta a sexta</b>. 1 partida por semana.</li>
+      <li>O prêmio vale na <b>quarta, quinta e sexta</b> desta semana. <b>1 partida por semana</b>, liberada de novo todo <b>sábado</b>.</li>
     </ul>
     <form id="form-inicio" novalidate>
       <label for="nome">Seu nome</label>
@@ -163,6 +165,22 @@
       </div>
       <p class="erro" id="erro-jogo" role="alert"></p>
     </div>
+  </section>
+
+  <!-- ENCERRADO (fim da temporada) -->
+  <section id="tela-encerrado" class="card fim" hidden>
+    <h2>O Show fez uma pausa!</h2>
+    <p>Foi um sucesso! Muita gente jogou e a gente adorou. A primeira temporada acabou, mas o Show da Terra Fértil volta em breve, com perguntas novas e novos prêmios.</p>
+    <form id="form-avise" novalidate>
+      <label for="nome2">Seu nome</label>
+      <input id="nome2" autocomplete="given-name" maxlength="60" placeholder="Como podemos te chamar?">
+      <label for="tel2">Seu WhatsApp com DDD</label>
+      <input id="tel2" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="(21) 99999-9999">
+      <p class="erro" id="erro-avise" role="alert"></p>
+      <button class="btn" id="btn-avise" type="submit">QUERO SER AVISADO</button>
+    </form>
+    <p class="ok" id="avise-ok" hidden><b>Prontinho!</b> Você vai ser um dos primeiros a saber quando o Show voltar. 🍕</p>
+    <a class="btn sec" id="enc-pedir" href="#" rel="noopener" style="text-decoration:none;text-align:center">Fazer meu pedido</a>
   </section>
 
   <!-- FIM -->
@@ -234,12 +252,20 @@
   }
 
   // ---------- abertura ----------
+  let FECHADO = !!CFG.encerrado || /previa=encerrado/.test(location.search);
+  function marcaFechado() { FECHADO = true; $('abertura').querySelector('p').textContent = 'A primeira temporada acabou. Em breve tem mais!'; $('btn-entrar').textContent = 'VER NOVIDADES'; }
+  function encerrado() { $('abertura').hidden = true; $('principal').hidden = false; mostra('tela-encerrado'); $('enc-pedir').href = CFG.cardapio; }
+  if (FECHADO) marcaFechado();
   $('btn-entrar').addEventListener('click', () => {
     audio(); somAbertura();
     $('abertura').style.transition = 'opacity .5s'; $('abertura').style.opacity = 0;
-    setTimeout(() => { $('abertura').hidden = true; $('principal').hidden = false; $('nome').focus(); }, 500);
+    setTimeout(() => { if (FECHADO) return encerrado(); $('abertura').hidden = true; $('principal').hidden = false; $('nome').focus(); }, 500);
   });
 
+  $('tel2').addEventListener('input', () => {
+    const t2 = $('tel2'); let d = t2.value.replace(/\D/g, '').slice(0, 11);
+    t2.value = d.length > 6 ? '(' + d.slice(0,2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4) : d.length > 2 ? '(' + d.slice(0,2) + ') ' + d.slice(2) : d;
+  });
   const tel = $('tel');
   tel.addEventListener('input', () => {
     let d = tel.value.replace(/\D/g, '').slice(0, 11);
@@ -248,8 +274,18 @@
 
   const call = (fn, ...args) => fetch(API, { method: 'POST', credentials: 'omit', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }) })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
-  call('config').then(c => { if (c && c.segundos) CFG = c; }).catch(() => {});   // acorda o servidor e atualiza a configuração
-  const mostra = t => ['tela-inicio','tela-jogo','tela-fim'].forEach(x => $(x).hidden = x !== t);
+  call('config').then(c => { if (c && c.segundos) CFG = c; if (c && c.encerrado && !FECHADO) marcaFechado(); }).catch(() => {});   // acorda o servidor e atualiza a configuração
+  const mostra = t => ['tela-inicio','tela-jogo','tela-fim','tela-encerrado'].forEach(x => $(x).hidden = x !== t);
+  $('form-avise').addEventListener('submit', async e => {
+    e.preventDefault(); $('erro-avise').textContent = '';
+    const b = $('btn-avise'); b.disabled = true; b.textContent = 'Enviando...';
+    try {
+      const r = await call('avisar', $('nome2').value, $('tel2').value);
+      if (r.erro) { $('erro-avise').textContent = r.erro; return; }
+      $('form-avise').hidden = true; $('avise-ok').hidden = false;
+    } catch (err) { $('erro-avise').textContent = 'Não conseguimos registrar agora. Tente de novo em instantes.'; }
+    finally { b.disabled = false; b.textContent = 'QUERO SER AVISADO'; }
+  });
 
   $('form-inicio').addEventListener('submit', async e => {
     e.preventDefault(); audio();
@@ -258,6 +294,7 @@
     try {
       const r = await call('iniciar', $('nome').value, tel.value);
       if (r.erro) { $('erro-inicio').textContent = r.erro; return; }
+      if (r.encerrado) { marcaFechado(); return encerrado(); }
       if (r.bloqueado) return bloqueio(r);
       if (r.fim) return fim(r);
       jogoId = r.id; mostra('tela-jogo'); render(r.painel);
@@ -338,7 +375,7 @@
     }
     const temCupom = !!r.cupom;
     $('fim-cupom').hidden = !temCupom; $('copiar').hidden = !temCupom; $('fim-validade').hidden = !temCupom;
-    if (temCupom) { $('fim-cupom').textContent = r.cupom; $('fim-validade').textContent = 'Válido até ' + r.validade + ', de quarta a sexta. Pedido mínimo e regras no cardápio.'; }
+    if (temCupom) { $('fim-cupom').textContent = r.cupom; $('fim-validade').textContent = 'Use de quarta a sexta, até ' + r.validade + '. Pedido mínimo de R$ 49.'; }
     $('fim-pedir').hidden = false; $('fim-pedir').href = CFG.cardapio;
   }
 
@@ -348,7 +385,7 @@
     $('fim-texto').textContent = 'Nova partida liberada a partir de ' + r.liberado + '.' + (r.ultimo && r.ultimo.cupom ? ' Seu último prêmio foi ' + (r.ultimo.pct === 100 ? 'uma Pizza Grande' : r.ultimo.pct + '% de desconto') + ':' : '');
     const c = r.ultimo && r.ultimo.cupom;
     $('fim-cupom').hidden = !c; $('copiar').hidden = !c; $('fim-validade').hidden = !c;
-    if (c) { $('fim-cupom').textContent = r.ultimo.cupom; $('fim-validade').textContent = 'Válido até ' + r.ultimo.validade + ', de quarta a sexta.'; }
+    if (c) { $('fim-cupom').textContent = r.ultimo.cupom; $('fim-validade').textContent = 'Use de quarta a sexta, até ' + r.ultimo.validade + '.'; }
     $('fim-pedir').hidden = false; $('fim-pedir').href = CFG.cardapio;
   }
 
