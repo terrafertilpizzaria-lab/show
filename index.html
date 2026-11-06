@@ -140,7 +140,7 @@
       <label for="nome">Seu nome</label>
       <input id="nome" autocomplete="given-name" maxlength="60" placeholder="Como podemos te chamar?">
       <label for="tel">Seu WhatsApp com DDD</label>
-      <input id="tel" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="(21) 99999-9999">
+      <input id="tel" type="tel" inputmode="numeric" autocomplete="tel" maxlength="20" placeholder="(21) 99999-9999">
       <p class="erro" id="erro-inicio" role="alert"></p>
       <button class="btn" id="btn-jogar" type="submit">VAMOS JOGAR!</button>
     </form>
@@ -175,7 +175,7 @@
       <label for="nome2">Seu nome</label>
       <input id="nome2" autocomplete="given-name" maxlength="60" placeholder="Como podemos te chamar?">
       <label for="tel2">Seu WhatsApp com DDD</label>
-      <input id="tel2" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="(21) 99999-9999">
+      <input id="tel2" type="tel" inputmode="numeric" autocomplete="tel" maxlength="20" placeholder="(21) 99999-9999">
       <p class="erro" id="erro-avise" role="alert"></p>
       <button class="btn" id="btn-avise" type="submit">QUERO SER AVISADO</button>
     </form>
@@ -263,12 +263,12 @@
   });
 
   $('tel2').addEventListener('input', () => {
-    const t2 = $('tel2'); let d = t2.value.replace(/\D/g, '').slice(0, 11);
+    const t2 = $('tel2'); let d = t2.value.replace(/\D/g, '').replace(/^55(?=\d{10})/, '').slice(0, 11);
     t2.value = d.length > 6 ? '(' + d.slice(0,2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4) : d.length > 2 ? '(' + d.slice(0,2) + ') ' + d.slice(2) : d;
   });
   const tel = $('tel');
   tel.addEventListener('input', () => {
-    let d = tel.value.replace(/\D/g, '').slice(0, 11);
+    let d = tel.value.replace(/\D/g, '').replace(/^55(?=\d{10})/, '').slice(0, 11);
     tel.value = d.length > 6 ? '(' + d.slice(0,2) + ') ' + d.slice(2, d.length - 4) + '-' + d.slice(-4) : d.length > 2 ? '(' + d.slice(0,2) + ') ' + d.slice(2) : d;
   });
 
