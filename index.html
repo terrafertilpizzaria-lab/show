@@ -132,7 +132,7 @@
     <ul class="regras">
       <li><b>16 perguntas</b> sobre pizza e sobre a Terra Fértil, da mais fácil à mais difícil.</li>
       <li>Cada acerto aumenta seu desconto. Chegou ao <b>milhão? Ganha uma Pizza Grande!</b></li>
-      <li><b>1 minuto</b> por pergunta e <b>3 pulos</b>.</li>
+      <li><b>30 segundos</b> por pergunta e <b>3 pulos</b>.</li>
       <li>Pode <b>parar</b> quando quiser e levar o que ganhou. Se errar, leva <b>metade</b>. Passou dos <b>100 mil</b>? Tem <b>15% garantidos</b>.</li>
       <li>O prêmio vale na <b>quarta, quinta e sexta</b> desta semana. <b>1 partida por semana</b>, liberada de novo todo <b>sábado</b>.</li>
     </ul>
@@ -151,7 +151,7 @@
     <div class="card" style="display:flex;flex-direction:column;gap:14px">
       <div class="topo"><span class="nivel" id="nivel">Pergunta 1 de 16</span><span class="valor" id="valor">R$ 1 mil</span></div>
       <div class="tempo" id="tempo"><i id="barra"></i></div>
-      <div class="segundos" id="segundos">60s</div>
+      <div class="segundos" id="segundos">30s</div>
       <p class="pergunta" id="pergunta"></p>
       <div class="opcoes" id="opcoes"></div>
       <div class="placar">
@@ -202,7 +202,7 @@
 
 <script>
   const API = 'https://script.google.com/macros/s/AKfycbz0vqnadg8otplhepcDhpp0hVmbHrYsscUakXHpa2irnt-As8_blyh7mYUT83_cYw4Pdg/exec';
-  let CFG = { segundos: 60, cardapio: 'https://pedido.anota.ai/loja/pizzaria-terra-frtil', pulos: 3 };
+  let CFG = { segundos: 30, cardapio: 'https://pedido.anota.ai/loja/pizzaria-terra-frtil', pulos: 3 };
   const $ = id => document.getElementById(id);
   let jogoId = null, timer = null, prazoLocal = 0, ultimoBip = 0;
 
