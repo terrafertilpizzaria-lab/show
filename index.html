@@ -112,6 +112,9 @@
   .som { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: 12px; z-index: 50; background: rgba(0,0,0,.4); color: #fff; border: 1px solid rgba(255,255,255,.4); border-radius: 999px; padding: 6px 12px; font: 800 13px var(--corpo); cursor: pointer; }
   .rodape { font-size: 12px; color: var(--suave); text-align: center; line-height: 1.5; margin-top: auto; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; } }
+  #tela-jogo { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  .pergunta canvas { display: block; margin: 0 auto; max-width: 100%; }
+  .op canvas { display: block; max-width: 100%; }
 </style>
 </head>
 <body>
@@ -132,7 +135,8 @@
     <ul class="regras">
       <li><b>16 perguntas</b> sobre pizza e sobre a Terra Fértil, da mais fácil à mais difícil.</li>
       <li>Cada acerto aumenta seu desconto. Chegou ao <b>milhão? Ganha uma Pizza Grande!</b></li>
-      <li><b>30 segundos</b> por pergunta e <b>3 pulos</b>.</li>
+      <li><b>15 segundos</b> por pergunta e <b>3 pulos</b>.</li>
+      <li><b>Não saia da tela</b> durante o jogo: se trocar de aba ou de aplicativo, a partida termina como se você tivesse errado.</li>
       <li>Pode <b>parar</b> quando quiser e levar o que ganhou. Se errar, leva <b>metade</b>. Passou dos <b>100 mil</b>? Tem <b>15% garantidos</b>.</li>
       <li>O prêmio vale na <b>quarta, quinta e sexta</b> desta semana. <b>1 partida por semana</b>, liberada de novo todo <b>sábado</b>.</li>
     </ul>
@@ -202,9 +206,9 @@
 
 <script>
   const API = 'https://script.google.com/macros/s/AKfycbz0vqnadg8otplhepcDhpp0hVmbHrYsscUakXHpa2irnt-As8_blyh7mYUT83_cYw4Pdg/exec';
-  let CFG = { segundos: 30, cardapio: 'https://pedido.anota.ai/loja/pizzaria-terra-frtil', pulos: 3 };
+  let CFG = { segundos: 15, cardapio: 'https://pedido.anota.ai/loja/pizzaria-terra-frtil', pulos: 3 };
   const $ = id => document.getElementById(id);
-  let jogoId = null, timer = null, prazoLocal = 0, ultimoBip = 0;
+  let jogoId = null, timer = null, prazoLocal = 0, ultimoBip = 0, emPergunta = false;
 
   // ---------- estrelas do palco ----------
   for (let i = 0; i < 40; i++) { const s = document.createElement('i'); s.style.left = Math.random() * 100 + '%'; s.style.top = Math.random() * 100 + '%'; s.style.animationDelay = (Math.random() * 2.4) + 's'; $('estrelas').append(s); }
@@ -306,7 +310,7 @@
     $('erro-jogo').textContent = '';
     $('nivel').textContent = 'Pergunta ' + p.nivel + ' de 16';
     $('valor').textContent = p.valor;
-    $('pergunta').textContent = p.pergunta.texto;
+    $('pergunta').replaceChildren(textoImg(p.pergunta.texto, 20, 900, 'center', $('pergunta').clientWidth - 28));
     $('v-acertar').textContent = p.acertar; $('v-parar').textContent = p.parar; $('v-errar').textContent = p.errar;
     $('btn-pular').textContent = 'Pular (' + p.pulos + ')'; $('btn-pular').disabled = p.pulos <= 0;
     $('btn-parar').disabled = p.parar === '0%';
@@ -314,27 +318,43 @@
     p.pergunta.opcoes.forEach((t, i) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'op';
       const l = document.createElement('b'); l.textContent = 'ABCD'[i];
-      const s = document.createElement('span'); s.textContent = t;
+      const s = textoImg(t, 17, 800, 'left', box.clientWidth - 92);
       b.append(l, s); b.addEventListener('click', () => responde(i, b)); box.append(b);
     });
     relogio(p.restante);
   }
 
+  // texto da pergunta desenhado como imagem: não dá para copiar nem para extensões de IA lerem
+  function textoImg(txt, px, peso, alinha, largura) {
+    largura = Math.max(140, largura || 280);
+    const fam = (getComputedStyle(document.documentElement).getPropertyValue('--corpo') || '').trim() || 'sans-serif';
+    const dpr = window.devicePixelRatio || 1, cv = document.createElement('canvas'), cx = cv.getContext('2d');
+    const fonte = peso + ' ' + px + 'px ' + fam; cx.font = fonte;
+    const linhas = []; let atual = '';
+    String(txt).split(/\s+/).forEach(w => { const t = atual ? atual + ' ' + w : w; if (cx.measureText(t).width > largura && atual) { linhas.push(atual); atual = w; } else atual = t; });
+    if (atual) linhas.push(atual);
+    const lh = Math.round(px * 1.35), w = alinha === 'center' ? largura : Math.ceil(Math.max(...linhas.map(l => cx.measureText(l).width))) + 2, h = linhas.length * lh;
+    cv.width = w * dpr; cv.height = h * dpr; cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    cx.scale(dpr, dpr); cx.font = fonte; cx.fillStyle = '#fff'; cx.textBaseline = 'middle'; cx.textAlign = alinha === 'center' ? 'center' : 'left';
+    linhas.forEach((l, i) => cx.fillText(l, alinha === 'center' ? w / 2 : 0, i * lh + lh / 2));
+    return cv;
+  }
+
   function relogio(seg) {
-    clearInterval(timer);
+    clearInterval(timer); emPergunta = true;
     prazoLocal = Date.now() + seg * 1000; ultimoBip = 0;
     const tick = () => {
       const rest = Math.max(0, prazoLocal - Date.now()), s = Math.ceil(rest / 1000);
       $('barra').style.transform = 'scaleX(' + (rest / (CFG.segundos * 1000)) + ')';
       $('segundos').textContent = s + 's';
-      $('tempo').classList.toggle('alerta', rest < 10000);
-      if (rest < 10000 && rest > 0 && s !== ultimoBip) { ultimoBip = s; bip(); }
+      $('tempo').classList.toggle('alerta', rest < 5000);
+      if (rest < 5000 && rest > 0 && s !== ultimoBip) { ultimoBip = s; bip(); }
       if (rest <= 0) { clearInterval(timer); trava(true); envia('responder', -1); }
     };
     tick(); timer = setInterval(tick, 200);
   }
 
-  function trava(v) { document.querySelectorAll('.op, #btn-pular, #btn-parar').forEach(b => b.disabled = v); }
+  function trava(v) { if (v) emPergunta = false; document.querySelectorAll('.op, #btn-pular, #btn-parar').forEach(b => b.disabled = v); }
 
   async function responde(i, btn) {
     clearInterval(timer); trava(true); btn.classList.add('escolhida'); somSuspense();
@@ -345,7 +365,7 @@
   async function envia(fn, arg, btn) {
     try {
       const r = await call(fn, jogoId, arg);
-      if (r.erro) { $('erro-jogo').textContent = r.erro; trava(false); return; }
+      if (r.erro) { $('erro-jogo').textContent = r.erro; trava(false); if (fn !== 'saiu' && prazoLocal > Date.now()) relogio((prazoLocal - Date.now()) / 1000); return; }
       if (fn === 'responder') {
         const acertou = r.acertou || r.milhao;
         if (btn) { btn.classList.remove('escolhida'); btn.classList.add(acertou ? 'certa' : 'errada'); }
@@ -358,6 +378,14 @@
     } catch (e) { $('erro-jogo').textContent = 'Falha de conexão. Toque de novo.'; trava(false); }
   }
 
+  // proteções: sair da tela durante a pergunta = erro; sem copiar/colar no jogo
+  const saiuDaTela = () => { if (!emPergunta || !jogoId) return; clearInterval(timer); trava(true); envia('saiu'); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saiuDaTela(); });
+  window.addEventListener('blur', saiuDaTela);
+  window.addEventListener('pagehide', saiuDaTela);
+  ['copy', 'cut', 'paste', 'contextmenu', 'selectstart', 'dragstart'].forEach(ev => document.addEventListener(ev, e => { if (!$('tela-jogo').hidden) e.preventDefault(); }));
+  document.addEventListener('keydown', e => { if (!$('tela-jogo').hidden && (e.ctrlKey || e.metaKey) && /^[acpsux]$/i.test(e.key)) e.preventDefault(); });
+
   $('btn-pular').addEventListener('click', () => { clearInterval(timer); trava(true); envia('pular'); });
   $('btn-parar').addEventListener('click', () => { clearInterval(timer); trava(true); envia('parar'); });
 
@@ -365,15 +393,15 @@
   const emReais = pct => (pct >= 100 ? 49.9 : pct * 0.5).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   function fim(r) {
-    clearInterval(timer); mostra('tela-fim');
+    clearInterval(timer); emPergunta = false; mostra('tela-fim');
     const t = $('fim-titulo'), x = $('fim-texto');
     if (r.milhao) { somMilhao(); confete(260); t.textContent = 'VOCÊ GANHOU O MILHÃO!'; x.textContent = 'Seu prêmio: uma Pizza Grande grátis! No Cardápio Digital, o cupom aparece como ' + emReais(100) + ' de desconto.'; }
     else if (r.pct > 0) {
       if (r.resultado === 'Parou') { somCerto(); confete(80); }
-      t.textContent = r.resultado === 'Parou' ? 'Boa decisão!' : r.motivo === 'tempo' ? 'O tempo acabou!' : 'Fim de jogo!';
+      t.textContent = r.resultado === 'Parou' ? 'Boa decisão!' : r.motivo === 'tempo' ? 'O tempo acabou!' : r.motivo === 'saiu' ? 'Você saiu da tela!' : 'Fim de jogo!';
       x.textContent = 'Seu prêmio é ' + r.pct + '% de desconto na Pizza Grande, o que equivale a ' + emReais(r.pct) + '. No Cardápio Digital, o cupom aparece com esse valor em reais.';
     } else {
-      t.textContent = r.motivo === 'tempo' ? 'O tempo acabou!' : 'Não foi dessa vez!';
+      t.textContent = r.motivo === 'tempo' ? 'O tempo acabou!' : r.motivo === 'saiu' ? 'Você saiu da tela!' : 'Não foi dessa vez!';
       x.textContent = 'Desta vez não teve prêmio. Semana que vem tem nova chance. E a pizza continua te esperando!';
     }
     const temCupom = !!r.cupom;
